@@ -1,0 +1,1969 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Wolf-KI – Dein technischer Assistent</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Icons / Logos -->
+  <link rel="icon" type="image/png" sizes="64x64" href="favicon-64.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="wolf-avatar-512.png" />
+  <meta property="og:image" content="wolf-logo-1024.png" />
+  <meta name="theme-color" content="#020617" />
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root {
+      --bg: #020617;
+      --bg-alt: #020617;
+      --card-bg: #020617;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.16);
+      --accent-strong: #0ea5e9;
+      --border-subtle: #1f2937;
+      --text: #e5e7eb;
+      --text-soft: #9ca3af;
+      --danger: #f97373;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at top, #0b1220 0, #020617 45%, #000 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+    }
+
+    .app-root {
+      width: 100%;
+      max-width: 1400px;
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* LOGIN SCREEN */
+    #login-screen {
+      margin: auto;
+      width: 100%;
+      max-width: 420px;
+      background: #020617;
+      border-radius: 24px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      box-shadow:
+        0 35px 80px rgba(15, 23, 42, 0.95),
+        0 0 0 1px rgba(148, 163, 184, 0.05);
+      padding: 32px 28px 26px;
+    }
+
+    .login-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .login-logo {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      background: radial-gradient(circle at 30% 20%, #f9fafb 0, #e5e7eb 30%, #020617 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+    }
+
+    .login-logo img {
+      width: 48px;
+      height: 48px;
+      object-fit: cover;
+    }
+
+    .login-header-text {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .login-title {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #e5e7eb;
+    }
+
+    .login-subtitle {
+      font-size: 13px;
+      color: var(--text-soft);
+    }
+
+    .login-card {
+      margin-top: 8px;
+      border-radius: 18px;
+      padding: 18px 16px 16px;
+      background: #020617;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .login-card-title {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-soft);
+      margin-bottom: 12px;
+    }
+
+    .login-form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .login-label {
+      font-size: 13px;
+      color: var(--text-soft);
+    }
+
+    .login-input {
+      background: rgba(15, 23, 42, 0.9);
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      padding: 8px 10px;
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+    }
+
+    .login-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.3);
+    }
+
+    .btn-primary {
+      border-radius: 999px;
+      border: none;
+      padding: 9px 12px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #020617;
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      cursor: pointer;
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+
+    .login-btn-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 6px;
+    }
+
+    .login-footer {
+      margin-top: 14px;
+      font-size: 11px;
+      color: var(--text-soft);
+      text-align: center;
+      opacity: 0.8;
+    }
+
+    .login-error {
+      margin-top: 8px;
+      padding: 6px 8px;
+      border-radius: 10px;
+      background: rgba(248, 113, 113, 0.08);
+      border: 1px solid rgba(248, 113, 113, 0.4);
+      font-size: 12px;
+      color: #fecaca;
+      display: none;
+    }
+
+    /* APP SHELL */
+    #app-shell {
+      display: none;
+      flex: 1;
+    }
+
+    .layout {
+      display: flex;
+      width: 100%;
+    }
+
+    .sidebar {
+      width: 240px;
+      padding: 18px 14px;
+      background: #020617;
+      border-right: 1px solid rgba(31, 41, 55, 0.9);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sidebar-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      overflow: hidden;
+      background: radial-gradient(circle at 20% 0, #f9fafb 0, #e5e7eb 30%, #020617 100%);
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .sidebar-logo img {
+      width: 38px;
+      height: 38px;
+      object-fit: cover;
+    }
+
+    .sidebar-title-main {
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #e5e7eb;
+    }
+
+    .sidebar-title-sub {
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+
+    .sidebar-nav {
+      margin-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .nav-link {
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 13px;
+      border: 1px solid transparent;
+      color: var(--text-soft);
+      cursor: pointer;
+      text-align: left;
+      background: transparent;
+    }
+
+    .nav-link:hover {
+      border-color: rgba(148, 163, 184, 0.6);
+    }
+
+    .nav-link.active {
+      background: var(--accent-soft);
+      border-color: rgba(56, 189, 248, 0.7);
+      color: #e5e7eb;
+    }
+
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #020617;
+    }
+
+    .topbar {
+      padding: 10px 18px;
+      border-bottom: 1px solid rgba(31, 41, 55, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-img {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      object-fit: cover;
+    }
+
+    .logo-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .app-title {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .app-subtitle {
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+
+    .greeting {
+      flex: 1;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-soft);
+    }
+
+    .greeting span {
+      font-weight: 600;
+      color: #e5e7eb;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+
+    .user-pill {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      padding: 4px 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .user-pill-name {
+      color: #e5e7eb;
+      font-weight: 500;
+    }
+
+    .btn-logout {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: transparent;
+      color: var(--text-soft);
+      cursor: pointer;
+    }
+
+    .btn-logout:hover {
+      background: rgba(148, 163, 184, 0.15);
+    }
+
+    .content {
+      flex: 1;
+      padding: 14px 16px 16px;
+      overflow: auto;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .section-sub {
+      font-size: 12px;
+      color: var(--text-soft);
+      margin-bottom: 10px;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .card {
+      background: #020617;
+      border-radius: 16px;
+      padding: 12px 12px 10px;
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.7);
+    }
+
+    .card-title {
+      font-size: 12px;
+      color: var(--text-soft);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+
+    .card-metric {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .card-hint {
+      font-size: 11px;
+      color: var(--text-soft);
+    }
+
+    .view {
+      width: 100%;
+    }
+
+    /* CHAT VIEW */
+    #view-chat {
+      display: none;
+    }
+
+    .chat-layout {
+      display: flex;
+      gap: 10px;
+      height: calc(100vh - 120px);
+      max-height: 760px;
+    }
+
+    .chat-sidebar {
+      width: 230px;
+      border-radius: 16px;
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      background: #020617;
+      display: flex;
+      flex-direction: column;
+      padding: 10px 10px 8px;
+    }
+
+    .chat-sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .btn-new-chat {
+      font-size: 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(56, 189, 248, 0.7);
+      background: var(--accent-soft);
+      color: #e5e7eb;
+      padding: 4px 10px;
+      cursor: pointer;
+    }
+
+    .chat-session-list {
+      flex: 1;
+      overflow-y: auto;
+      margin-top: 6px;
+      padding-right: 4px;
+    }
+
+    .chat-session-item {
+      font-size: 12px;
+      padding: 6px 7px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      color: var(--text-soft);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 4px;
+    }
+
+    .chat-session-item.active {
+      background: var(--accent-soft);
+      border-color: rgba(56, 189, 248, 0.7);
+      color: #e5e7eb;
+    }
+
+    .chat-session-item span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .btn-session-delete {
+      border: none;
+      background: transparent;
+      color: var(--text-soft);
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .btn-session-delete:hover {
+      color: #fecaca;
+    }
+
+    .chat-main {
+      flex: 1;
+      border-radius: 16px;
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      background: #020617;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .chat-toolbar {
+      padding: 6px 8px;
+      border-bottom: 1px solid rgba(31, 41, 55, 0.9);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.98);
+    }
+
+    .chat-toolbar-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-soft);
+    }
+
+    .chat-select {
+      font-size: 11px;
+      background: #020617;
+      color: var(--text);
+      border-radius: 8px;
+      border: 1px solid rgba(51, 65, 85, 0.9);
+      padding: 3px 6px;
+    }
+
+    .chat-messages {
+      flex: 1;
+      padding: 10px 10px 6px;
+      overflow-y: auto;
+      background: radial-gradient(circle at top, #020617 0, #020617 40%, #020617 100%);
+    }
+
+    .msg-row {
+      margin-bottom: 10px;
+      display: flex;
+    }
+
+    .msg-row.user {
+      justify-content: flex-end;
+    }
+
+    .msg-bubble {
+      max-width: 85%;
+      padding: 8px 10px;
+      border-radius: 14px;
+      font-size: 13px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+
+    .msg-user {
+      background: var(--accent-soft);
+      border-bottom-right-radius: 4px;
+    }
+
+    .msg-ai {
+      background: #020617;
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      border-bottom-left-radius: 4px;
+    }
+
+    .msg-meta {
+      font-size: 10px;
+      color: var(--text-soft);
+      margin-bottom: 2px;
+    }
+
+    .chat-input-area {
+      border-top: 1px solid rgba(31, 41, 55, 0.9);
+      padding: 8px;
+      background: rgba(15, 23, 42, 0.98);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .chat-input-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+
+    .chat-input {
+      flex: 1;
+      resize: none;
+      border-radius: 12px;
+      border: 1px solid rgba(51, 65, 85, 0.9);
+      background: #020617;
+      padding: 8px 10px;
+      font-size: 13px;
+      color: var(--text);
+      height: 70px;
+    }
+
+    .chat-right-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .btn-chat-send {
+      border-radius: 999px;
+      border: none;
+      padding: 7px 13px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      font-size: 13px;
+      cursor: pointer;
+      color: #020617;
+      font-weight: 500;
+    }
+
+    .btn-chat-send:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    .btn-chat-export {
+      font-size: 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: transparent;
+      color: var(--text-soft);
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+
+    .chat-attachment-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .attachment-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-soft);
+    }
+
+    .file-label {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 11px;
+    }
+
+    .file-label:hover {
+      background: rgba(148, 163, 184, 0.15);
+    }
+
+    #chat-file-input {
+      display: none;
+    }
+
+    .dropzone {
+      flex: 1;
+      border-radius: 999px;
+      border: 1px dashed rgba(148, 163, 184, 0.7);
+      padding: 4px 8px;
+      font-size: 11px;
+      color: var(--text-soft);
+      text-align: center;
+    }
+
+    .dropzone.dragover {
+      border-style: solid;
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.08);
+      color: #e5e7eb;
+    }
+
+    .attachment-right {
+      font-size: 11px;
+      color: var(--text-soft);
+    }
+
+    /* TABLE / LIST VIEWS */
+    .table-wrapper {
+      border-radius: 16px;
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      background: #020617;
+      overflow: hidden;
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.7);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead {
+      background: rgba(15, 23, 42, 0.98);
+    }
+
+    th,
+    td {
+      padding: 8px 10px;
+      border-bottom: 1px solid rgba(31, 41, 55, 0.9);
+      vertical-align: top;
+    }
+
+    th {
+      text-align: left;
+      color: var(--text-soft);
+      font-weight: 500;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .btn-small {
+      font-size: 11px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: transparent;
+      color: var(--text-soft);
+      cursor: pointer;
+    }
+
+    .btn-small.danger {
+      border-color: rgba(248, 113, 113, 0.8);
+      color: #fecaca;
+    }
+
+    .btn-small.danger:hover {
+      background: rgba(248, 113, 113, 0.12);
+    }
+
+    .btn-small:hover {
+      background: rgba(148, 163, 184, 0.16);
+    }
+
+    .badge {
+      display: inline-block;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      padding: 2px 6px;
+      font-size: 11px;
+      color: var(--text-soft);
+    }
+
+    .badge.green {
+      border-color: rgba(34, 197, 94, 0.7);
+      color: #bbf7d0;
+    }
+
+    .badge.blue {
+      border-color: rgba(59, 130, 246, 0.7);
+      color: #bfdbfe;
+    }
+
+    .badge.orange {
+      border-color: rgba(249, 115, 22, 0.7);
+      color: #fed7aa;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 900px) {
+      .sidebar {
+        display: none;
+      }
+      .topbar {
+        padding-inline: 10px;
+        gap: 8px;
+      }
+      .greeting {
+        display: none;
+      }
+      .content {
+        padding-inline: 10px;
+      }
+      .chat-layout {
+        flex-direction: column;
+        height: calc(100vh - 130px);
+      }
+      .chat-sidebar {
+        width: 100%;
+        order: 2;
+      }
+      .chat-main {
+        order: 1;
+      }
+    }
+
+    @media (max-width: 640px) {
+      #login-screen {
+        margin: 16px;
+        max-width: 100%;
+      }
+      .topbar-left .app-subtitle {
+        display: none;
+      }
+      .chat-input {
+        height: 60px;
+      }
+      .chat-input-area {
+        position: sticky;
+        bottom: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-root">
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen">
+      <div class="login-header">
+        <div class="login-logo">
+          <img src="wolf-avatar-512.png" alt="Wolf-KI" />
+        </div>
+        <div class="login-header-text">
+          <div class="login-title">Wolf-KI</div>
+          <div class="login-subtitle">Sicherer Zugang zu deinem Technik-Assistenten</div>
+        </div>
+      </div>
+      <div class="login-card">
+        <div class="login-card-title">Anmeldung</div>
+        <form id="login-form" autocomplete="off">
+          <div class="login-form-group">
+            <label class="login-label" for="login-email">E-Mail</label>
+            <input
+              id="login-email"
+              class="login-input"
+              type="email"
+              autocomplete="off"
+              required
+            />
+          </div>
+          <div class="login-form-group">
+            <label class="login-label" for="login-password">Passwort</label>
+            <input
+              id="login-password"
+              class="login-input"
+              type="password"
+              autocomplete="new-password"
+              required
+            />
+          </div>
+          <div class="login-btn-row">
+            <button type="submit" class="btn-primary" id="login-submit">
+              Einloggen
+            </button>
+          </div>
+        </form>
+        <div id="login-error" class="login-error"></div>
+      </div>
+      <div class="login-footer">
+        Wolf-KI speichert Chats, Memories & Statistiken personalisiert für deinen Account.
+      </div>
+    </div>
+
+    <!-- APP SHELL -->
+    <div id="app-shell">
+      <div class="layout">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+          <div class="sidebar-header">
+            <div class="sidebar-logo">
+              <img src="wolf-logo-1024.png" alt="Wolf-KI Logo" />
+            </div>
+            <div>
+              <div class="sidebar-title-main">Wolf-KI</div>
+              <div class="sidebar-title-sub">Cloud Assistant</div>
+            </div>
+          </div>
+          <nav class="sidebar-nav">
+            <button class="nav-link active" data-view="dashboard">Dashboard</button>
+            <button class="nav-link" data-view="chat">Chat</button>
+            <button class="nav-link" data-view="history">Verlauf</button>
+            <button class="nav-link" data-view="memories">Memories</button>
+            <button class="nav-link" data-view="code">Code-Projekte</button>
+            <button class="nav-link" data-view="stats">Statistiken</button>
+            <button class="nav-link" data-view="system">System-Infos</button>
+            <button class="nav-link" data-view="admin" id="nav-admin" style="display:none;">Benutzerverwaltung</button>
+          </nav>
+        </aside>
+
+        <!-- MAIN -->
+        <main class="main">
+          <header class="topbar">
+            <div class="topbar-left">
+              <div class="logo-wrap">
+                <img src="wolf-logo-1024.png" alt="Wolf-KI" class="logo-img" />
+                <div class="logo-text">
+                  <div class="app-title">Wolf-KI</div>
+                  <div class="app-subtitle">Technik, Projekte, Finanzen & Automation</div>
+                </div>
+              </div>
+            </div>
+            <div class="greeting" id="greeting">
+              Hallo <span id="greeting-name">User</span>, schön dass du da bist. Wie kann ich dich heute unterstützen?
+            </div>
+            <div class="topbar-right">
+              <div class="user-pill">
+                <span class="user-pill-name" id="topbar-user">-</span>
+                <span id="topbar-role" class="badge">-</span>
+              </div>
+              <button class="btn-logout" id="btn-logout">Abmelden</button>
+            </div>
+          </header>
+
+          <section class="content">
+            <!-- DASHBOARD -->
+            <div id="view-dashboard" class="view">
+              <div class="section-title">Übersicht</div>
+              <div class="section-sub">
+                Hier siehst du eine schnelle Übersicht über deine Nutzung, letzte Analysen und Abfragen.
+              </div>
+              <div class="dashboard-grid">
+                <div class="card">
+                  <div class="card-title">Heutige Anfragen</div>
+                  <div class="card-metric" id="metric-today">0</div>
+                  <div class="card-hint">Anfragen, die heute an die Wolf-KI gestellt wurden.</div>
+                </div>
+                <div class="card">
+                  <div class="card-title">Gesamtanfragen</div>
+                  <div class="card-metric" id="metric-requests-total">0</div>
+                  <div class="card-hint">Gesamte Nutzung über alle Tage.</div>
+                </div>
+                <div class="card">
+                  <div class="card-title">Gespeicherte Memories</div>
+                  <div class="card-metric" id="metric-memories">0</div>
+                  <div class="card-hint">Dauerhaft gespeicherte Infos, die Wolf-KI sich gemerkt hat.</div>
+                </div>
+                <div class="card">
+                  <div class="card-title">Code-Projekte</div>
+                  <div class="card-metric" id="metric-code-projects">0</div>
+                  <div class="card-hint">Gespeicherte Programme/Projekte zum späteren Weiterarbeiten.</div>
+                </div>
+              </div>
+
+              <div class="card" style="margin-bottom:10px;">
+                <div class="section-title">Letzte Analysen</div>
+                <div class="section-sub">
+                  Zuletzt verarbeitete Dateien und Bilder (z. B. Dokumente, Logs, Screenshots von Anlagen).
+                </div>
+                <div id="recent-docs-list" style="font-size:13px;color:var(--text-soft);">
+                  Noch keine Analysen vorhanden.
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="section-title">Kurzanleitung</div>
+                <div style="font-size:13px;color:var(--text-soft);line-height:1.5;">
+                  • Im Tab <b>Chat</b> kannst du Fragen stellen, Dateien per Drag & Drop oder „+“ anhängen und neue Chats starten.<br/>
+                  • Im Tab <b>Verlauf</b> kannst du frühere Chats ansehen, löschen oder durch Anklicken fortsetzen.<br/>
+                  • Im Tab <b>Memories</b> kannst du gespeicherte Notizen ansehen, bearbeiten oder löschen.<br/>
+                  • Über <b>Code-Projekte</b> kannst du komplette Programme speichern und später erweitern.<br/>
+                  • In <b>Statistiken</b> siehst du übergreifende Kennzahlen und Nutzung.<br/>
+                  • In <b>System-Infos</b> findest du Informationen zur Backend-Version, KI-Modell, Packages usw.<br/>
+                </div>
+              </div>
+            </div>
+
+            <!-- CHAT VIEW -->
+            <div id="view-chat" class="view" style="display:none;">
+              <div class="chat-layout">
+                <!-- Chat Sessions -->
+                <div class="chat-sidebar">
+                  <div class="chat-sidebar-header">
+                    <span style="font-size:12px;color:var(--text-soft);">Chats</span>
+                    <button class="btn-new-chat" id="btn-new-chat">Neuer Chat</button>
+                  </div>
+                  <div class="chat-session-list" id="chat-session-list">
+                    <!-- Sessions werden dynamisch hinzugefügt -->
+                  </div>
+                </div>
+
+                <!-- Chat Main -->
+                <div class="chat-main">
+                  <div class="chat-toolbar">
+                    <div class="chat-toolbar-group">
+                      Modus:
+                      <select id="chat-mode" class="chat-select">
+                        <option value="normal">Normal</option>
+                        <option value="proofread">Rechtschreibung</option>
+                        <option value="technical">Technik-Experte</option>
+                      </select>
+                    </div>
+                    <div class="chat-toolbar-group">
+                      Sprache:
+                      <select id="chat-language" class="chat-select">
+                        <option value="de">Deutsch</option>
+                        <option value="en">Englisch</option>
+                      </select>
+                    </div>
+                    <div class="chat-toolbar-group" style="margin-left:auto;">
+                      <span id="chat-status" style="font-size:11px;color:var(--text-soft);">
+                        Enter = senden • Shift+Enter = Zeilenumbruch
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="chat-messages" id="chat-messages"></div>
+
+                  <div class="chat-input-area">
+                    <div class="chat-input-row">
+                      <textarea
+                        id="chat-input"
+                        class="chat-input"
+                        placeholder="Frage die Wolf-KI z. B. nach Fördertechnik, Smart Home, Finanzen, Hausbau, Programmierung oder Dateiauswertungen…"
+                      ></textarea>
+                      <div class="chat-right-buttons">
+                        <button id="btn-chat-send" class="btn-chat-send">Senden</button>
+                        <button id="btn-chat-export" class="btn-chat-export">
+                          Chat exportieren
+                        </button>
+                      </div>
+                    </div>
+                    <div class="chat-attachment-row">
+                      <div class="attachment-left">
+                        <label class="file-label" for="chat-file-input">+ Datei anhängen</label>
+                        <input
+                          type="file"
+                          id="chat-file-input"
+                          multiple
+                        />
+                        <div class="dropzone" id="chat-dropzone">
+                          Dateien hier ablegen, um sie analysieren zu lassen…
+                        </div>
+                      </div>
+                      <div class="attachment-right">
+                        Dateien werden als zusätzliche „Antwort“ der KI mit gespeichert.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- HISTORY VIEW -->
+            <div id="view-history" class="view" style="display:none;">
+              <div class="section-title">Verlauf</div>
+              <div class="section-sub">
+                Hier siehst du deine bisherigen Nachrichten. Du kannst Einträge löschen oder durch Anklicken als Basis für neue Fragen verwenden.
+              </div>
+              <div class="table-wrapper">
+                <table id="history-table">
+                  <thead>
+                    <tr>
+                      <th>Datum</th>
+                      <th>Rolle</th>
+                      <th>Inhalt</th>
+                      <th>Aktionen</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td colspan="4">Noch kein Verlauf geladen…</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- MEMORIES VIEW -->
+            <div id="view-memories" class="view" style="display:none;">
+              <div class="section-title">Memories</div>
+              <div class="section-sub">
+                Dauerhaft gespeicherte Notizen der Wolf-KI. Du kannst Einträge bearbeiten oder löschen.
+              </div>
+              <div class="table-wrapper">
+                <table id="memories-table">
+                  <thead>
+                    <tr>
+                      <th>Datum</th>
+                      <th>Typ</th>
+                      <th>Inhalt</th>
+                      <th>Wichtigkeit</th>
+                      <th>Aktionen</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td colspan="5">Noch keine Memories geladen…</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- CODE PROJECTS -->
+            <div id="view-code" class="view" style="display:none;">
+              <div class="section-title">Code-Projekte</div>
+              <div class="section-sub">
+                Programme (z. B. Python-Skripte) speichern, laden und später weiterbearbeiten.
+              </div>
+
+              <div class="card" style="margin-bottom:10px;">
+                <div class="card-title">Meine Projekte</div>
+                <div id="code-projects-list" style="font-size:13px;color:var(--text-soft);">
+                  Noch keine Projekte geladen…
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="section-title">Projekt bearbeiten</div>
+                <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;">
+                  <input
+                    id="code-title"
+                    type="text"
+                    placeholder="Titel des Projekts"
+                    style="padding:6px 8px;border-radius:8px;border:1px solid rgba(51,65,85,0.9);background:#020617;color:#e5e7eb;font-size:13px;"
+                  />
+                  <input
+                    id="code-language"
+                    type="text"
+                    placeholder="Sprache (z. B. Python)"
+                    style="padding:6px 8px;border-radius:8px;border:1px solid rgba(51,65,85,0.9);background:#020617;color:#e5e7eb;font-size:13px;"
+                  />
+                  <textarea
+                    id="code-content"
+                    placeholder="Hier deinen Programm-Code einfügen…"
+                    style="min-height:220px;padding:8px 10px;border-radius:10px;border:1px solid rgba(51,65,85,0.9);background:#020617;color:#e5e7eb;font-size:12px;font-family:monospace;"
+                  ></textarea>
+                </div>
+                <div style="display:flex;gap:8px;">
+                  <button id="btn-code-new" class="btn-small">Neues Projekt</button>
+                  <button id="btn-code-save" class="btn-primary" style="width:auto;">Speichern / Aktualisieren</button>
+                </div>
+                <div id="code-status" style="margin-top:6px;font-size:12px;color:var(--text-soft);"></div>
+              </div>
+            </div>
+
+            <!-- STATS VIEW -->
+            <div id="view-stats" class="view" style="display:none;">
+              <div class="section-title">Statistiken</div>
+              <div class="section-sub">
+                Überblick über deine Nutzung der Wolf-KI. (Basis: request_log & weitere Kennzahlen.)
+              </div>
+              <div class="card" style="margin-bottom:10px;">
+                <div class="card-title">Zusammenfassung</div>
+                <div id="stats-summary" style="font-size:13px;color:var(--text-soft);line-height:1.5;">
+                  Lade Statistiken…
+                </div>
+              </div>
+              <div class="table-wrapper">
+                <table id="stats-table">
+                  <thead>
+                    <tr>
+                      <th>Tag</th>
+                      <th>Anfragen</th>
+                      <th>Geschätzte Tokens</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td colspan="3">Noch keine Details geladen…</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- SYSTEM INFO VIEW -->
+            <div id="view-system" class="view" style="display:none;">
+              <div class="section-title">System-Infos</div>
+              <div class="section-sub">
+                Technische Informationen zur laufenden Wolf-KI Instanz (Backend-Version, KI-Modell, Pakete, Umgebung).
+              </div>
+              <div class="card">
+                <pre
+                  id="system-info"
+                  style="font-size:12px;color:var(--text-soft);white-space:pre-wrap;max-height:420px;overflow:auto;background:#020617;border-radius:12px;border:1px solid rgba(31,41,55,0.9);padding:8px 10px;"
+                >Lade Systeminformationen…</pre>
+              </div>
+            </div>
+
+            <!-- ADMIN VIEW -->
+            <div id="view-admin" class="view" style="display:none;">
+              <div class="section-title">Benutzerverwaltung</div>
+              <div class="section-sub">
+                Dieser Bereich ist nur für Admin-Benutzer sichtbar. Später können hier Benutzer und Rollen verwaltet werden.
+              </div>
+              <div class="card">
+                <div style="font-size:13px;color:var(--text-soft);">
+                  Platzhalter: Admin-Funktionen werden über Supabase-Tabellen (<code>user_profile</code>) direkt verwaltet.
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==== KONFIG ANPASSEN ====
+    const API_BASE = "https://wolf-ki-backend.onrender.com";
+    const API_URL = API_BASE + "/ask";
+
+    // HIER deine Supabase-Daten eintragen:
+    const SUPABASE_URL = "https://psikjgzulbfoyqboskvx.supabase.co"; // <- anpassen
+    const SUPABASE_ANON_KEY = "sb_publishable_SWSd1MDNHi5cBJjzrf_bCQ_H0JCgkwX"; // <- anpassen
+
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let currentUser = null;
+    let currentProfile = null;
+    let currentChatMode = "normal";
+    let currentChatLanguage = "de";
+    let currentSessionId = "default";
+    let sessions = [{ id: "default", title: "Standard-Chat" }];
+    let inactivityTimer = null;
+    const AUTO_LOGOUT_MINUTES = 15;
+
+    // DOM ELEMENTE
+    const loginScreen = document.getElementById("login-screen");
+    const appShell = document.getElementById("app-shell");
+    const loginForm = document.getElementById("login-form");
+    const loginErrorEl = document.getElementById("login-error");
+    const loginSubmitBtn = document.getElementById("login-submit");
+
+    const navButtons = document.querySelectorAll(".nav-link");
+    const views = {
+      dashboard: document.getElementById("view-dashboard"),
+      chat: document.getElementById("view-chat"),
+      history: document.getElementById("view-history"),
+      memories: document.getElementById("view-memories"),
+      code: document.getElementById("view-code"),
+      stats: document.getElementById("view-stats"),
+      system: document.getElementById("view-system"),
+      admin: document.getElementById("view-admin"),
+    };
+
+    const navAdmin = document.getElementById("nav-admin");
+
+    const greetingNameEl = document.getElementById("greeting-name");
+    const topbarUserEl = document.getElementById("topbar-user");
+    const topbarRoleEl = document.getElementById("topbar-role");
+    const btnLogout = document.getElementById("btn-logout");
+
+    const metricTodayEl = document.getElementById("metric-today");
+    const metricRequestsTotalEl = document.getElementById("metric-requests-total");
+    const metricMemoriesEl = document.getElementById("metric-memories");
+    const metricCodeProjectsEl = document.getElementById("metric-code-projects");
+    const recentDocsListEl = document.getElementById("recent-docs-list");
+
+    const chatModeEl = document.getElementById("chat-mode");
+    const chatLanguageEl = document.getElementById("chat-language");
+    const chatMessagesEl = document.getElementById("chat-messages");
+    const chatInputEl = document.getElementById("chat-input");
+    const chatSendBtn = document.getElementById("btn-chat-send");
+    const chatExportBtn = document.getElementById("btn-chat-export");
+    const chatStatusEl = document.getElementById("chat-status");
+    const chatFileInput = document.getElementById("chat-file-input");
+    const chatDropzone = document.getElementById("chat-dropzone");
+    const chatSessionListEl = document.getElementById("chat-session-list");
+    const btnNewChat = document.getElementById("btn-new-chat");
+
+    const historyTableBody = document.querySelector("#history-table tbody");
+    const memoriesTableBody = document.querySelector("#memories-table tbody");
+    const codeProjectsListEl = document.getElementById("code-projects-list");
+    const codeTitleEl = document.getElementById("code-title");
+    const codeLanguageEl = document.getElementById("code-language");
+    const codeContentEl = document.getElementById("code-content");
+    const btnCodeNew = document.getElementById("btn-code-new");
+    const btnCodeSave = document.getElementById("btn-code-save");
+    const codeStatusEl = document.getElementById("code-status");
+
+    const statsSummaryEl = document.getElementById("stats-summary");
+    const statsTableBody = document.querySelector("#stats-table tbody");
+    const systemInfoEl = document.getElementById("system-info");
+
+    let currentCodeProjectId = null;
+
+    function resetInactivityTimer() {
+      if (!currentUser) return;
+      if (inactivityTimer) clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(() => {
+        logoutUser(true);
+      }, AUTO_LOGOUT_MINUTES * 60 * 1000);
+    }
+
+    ["click", "keydown", "mousemove", "touchstart"].forEach(evt => {
+      window.addEventListener(evt, () => resetInactivityTimer(), { passive: true });
+    });
+
+    function showView(viewName) {
+      for (const key in views) {
+        if (Object.prototype.hasOwnProperty.call(views, key)) {
+          views[key].style.display = key === viewName ? "block" : "none";
+        }
+      }
+      navButtons.forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.view === viewName);
+      });
+
+      if (viewName === "dashboard") {
+        loadDashboardData();
+      } else if (viewName === "history") {
+        loadHistory();
+      } else if (viewName === "memories") {
+        loadMemoriesTable();
+      } else if (viewName === "code") {
+        loadCodeProjects();
+      } else if (viewName === "stats") {
+        loadStats();
+      } else if (viewName === "system") {
+        loadSystemInfo();
+      }
+    }
+
+    navButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        showView(btn.dataset.view);
+      });
+    });
+
+    chatModeEl.addEventListener("change", () => {
+      currentChatMode = chatModeEl.value;
+    });
+
+    chatLanguageEl.addEventListener("change", () => {
+      currentChatLanguage = chatLanguageEl.value;
+    });
+
+    async function loadDashboardData() {
+      try {
+        const res = await fetch(API_BASE + "/metrics");
+        if (!res.ok) return;
+        const data = await res.json();
+        metricTodayEl.textContent = data.today_requests ?? 0;
+        metricRequestsTotalEl.textContent = data.total_requests ?? 0;
+        metricMemoriesEl.textContent = data.total_memories ?? 0;
+        metricCodeProjectsEl.textContent = data.total_code_projects ?? 0;
+        const docs = data.recent_documents || [];
+        if (!docs.length) {
+          recentDocsListEl.textContent = "Noch keine Analysen vorhanden.";
+        } else {
+          recentDocsListEl.innerHTML = "";
+          docs.forEach(doc => {
+            const div = document.createElement("div");
+            const dateStr = doc.created_at ? doc.created_at.replace("T", " ").slice(0, 16) : "";
+            div.textContent = `• [${doc.doc_type || "doc"}] ${doc.filename || "-"} (${dateStr})`;
+            recentDocsListEl.appendChild(div);
+          });
+        }
+      } catch (err) {
+        console.error("Fehler beim Laden der Metrics:", err);
+      }
+    }
+
+    async function loadMemoriesTable() {
+      try {
+        const userId = currentUser ? currentUser.id : "";
+        const res = await fetch(API_BASE + "/memories?limit=100" + (userId ? "&user_id=" + encodeURIComponent(userId) : ""));
+        if (!res.ok) return;
+        const data = await res.json();
+        memoriesTableBody.innerHTML = "";
+        if (!data || data.length === 0) {
+          const tr = document.createElement("tr");
+          const td = document.createElement("td");
+          td.colSpan = 5;
+          td.textContent = "Noch keine Memories gespeichert.";
+          tr.appendChild(td);
+          memoriesTableBody.appendChild(tr);
+          return;
+        }
+        data.forEach(mem => {
+          const tr = document.createElement("tr");
+          const created = document.createElement("td");
+          created.textContent = mem.created_at ? mem.created_at.replace("T", " ").slice(0, 16) : "";
+          const typeTd = document.createElement("td");
+          typeTd.textContent = mem.type || "";
+          const contentTd = document.createElement("td");
+          const textarea = document.createElement("textarea");
+          textarea.value = mem.content || "";
+          textarea.style.width = "100%";
+          textarea.style.minHeight = "60px";
+          textarea.style.background = "#020617";
+          textarea.style.color = "#e5e7eb";
+          textarea.style.borderRadius = "8px";
+          textarea.style.border = "1px solid rgba(51,65,85,0.9)";
+          textarea.style.fontSize = "12px";
+          contentTd.appendChild(textarea);
+          const impTd = document.createElement("td");
+          impTd.textContent = mem.importance != null ? String(mem.importance) : "";
+          const actionTd = document.createElement("td");
+          const btnSave = document.createElement("button");
+          btnSave.className = "btn-small";
+          btnSave.textContent = "Speichern";
+          btnSave.addEventListener("click", () => updateMemory(mem.id, textarea.value));
+          const btnDel = document.createElement("button");
+          btnDel.className = "btn-small danger";
+          btnDel.textContent = "Löschen";
+          btnDel.style.marginLeft = "4px";
+          btnDel.addEventListener("click", () => deleteMemory(mem.id));
+          actionTd.appendChild(btnSave);
+          actionTd.appendChild(btnDel);
+
+          tr.appendChild(created);
+          tr.appendChild(typeTd);
+          tr.appendChild(contentTd);
+          tr.appendChild(impTd);
+          tr.appendChild(actionTd);
+
+          memoriesTableBody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error("Fehler beim Laden der Memories:", err);
+      }
+    }
+
+    async function updateMemory(id, newContent) {
+      try {
+        const res = await fetch(API_BASE + "/memories/" + encodeURIComponent(id), {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: newContent }),
+        });
+        if (!res.ok) {
+          alert("Fehler beim Aktualisieren der Memory: " + res.status);
+        }
+      } catch (err) {
+        console.error("Update Memory Fehler:", err);
+      }
+    }
+
+    async function deleteMemory(id) {
+      if (!confirm("Diesen Memory-Eintrag wirklich löschen?")) return;
+      try {
+        const res = await fetch(API_BASE + "/memories/" + encodeURIComponent(id), {
+          method: "DELETE",
+        });
+        if (!res.ok) {
+          alert("Fehler beim Löschen der Memory: " + res.status);
+          return;
+        }
+        loadMemoriesTable();
+      } catch (err) {
+        console.error("Delete Memory Fehler:", err);
+      }
+    }
+
+    async function loadHistory() {
+      if (!currentUser) return;
+      try {
+        const res = await fetch(API_BASE + "/history?user_id=" + encodeURIComponent(currentUser.id) + "&limit=200");
+        if (!res.ok) return;
+        const data = await res.json();
+        historyTableBody.innerHTML = "";
+        if (!data || data.length === 0) {
+          const tr = document.createElement("tr");
+          const td = document.createElement("td");
+          td.colSpan = 4;
+          td.textContent = "Noch kein Verlauf gespeichert.";
+          tr.appendChild(td);
+          historyTableBody.appendChild(tr);
+          return;
+        }
+        data.forEach(msg => {
+          const tr = document.createElement("tr");
+          const tdDate = document.createElement("td");
+          tdDate.textContent = msg.created_at ? msg.created_at.replace("T", " ").slice(0, 16) : "";
+          const tdRole = document.createElement("td");
+          tdRole.textContent = msg.role || "";
+          const tdContent = document.createElement("td");
+          tdContent.textContent = msg.content || "";
+          tdContent.style.cursor = "pointer";
+          tdContent.style.color = "#d1d5db";
+          tdContent.addEventListener("click", () => {
+            showView("chat");
+            chatInputEl.value = msg.content + "\n\n";
+            chatInputEl.focus();
+          });
+          const tdActions = document.createElement("td");
+          const btnDel = document.createElement("button");
+          btnDel.className = "btn-small danger";
+          btnDel.textContent = "Löschen";
+          btnDel.addEventListener("click", () => deleteHistoryMessage(msg.id));
+          tdActions.appendChild(btnDel);
+
+          tr.appendChild(tdDate);
+          tr.appendChild(tdRole);
+          tr.appendChild(tdContent);
+          tr.appendChild(tdActions);
+
+          historyTableBody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error("Fehler beim Laden des Verlaufs:", err);
+      }
+    }
+
+    async function deleteHistoryMessage(id) {
+      if (!confirm("Diesen Verlaufseintrag wirklich löschen?")) return;
+      try {
+        const res = await fetch(API_BASE + "/history/" + encodeURIComponent(id), {
+          method: "DELETE",
+        });
+        if (!res.ok) {
+          alert("Fehler beim Löschen des Verlaufs: " + res.status);
+          return;
+        }
+        loadHistory();
+      } catch (err) {
+        console.error("Delete History Fehler:", err);
+      }
+    }
+
+    function addMessage(sender, text, meta = "") {
+      const row = document.createElement("div");
+      row.classList.add("msg-row", sender === "user" ? "user" : "ai");
+
+      const col = document.createElement("div");
+      if (meta) {
+        const metaEl = document.createElement("div");
+        metaEl.className = "msg-meta";
+        metaEl.textContent = meta;
+        col.appendChild(metaEl);
+      }
+
+      const bubble = document.createElement("div");
+      bubble.classList.add("msg-bubble", sender === "user" ? "msg-user" : "msg-ai");
+      bubble.textContent = text;
+      col.appendChild(bubble);
+
+      row.appendChild(col);
+      chatMessagesEl.appendChild(row);
+      chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const text = chatInputEl.value.trim();
+      if (!text) return;
+      chatInputEl.value = "";
+      addMessage("user", text);
+      chatSendBtn.disabled = true;
+      chatStatusEl.textContent = "Sende Anfrage…";
+
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: text,
+            mode: currentChatMode,
+            target_language: currentChatLanguage,
+            user_id: currentUser ? currentUser.id : null,
+            user_name: currentUser ? (currentProfile?.display_name || currentUser.email) : null,
+            session_id: currentSessionId,
+          }),
+        });
+        if (!res.ok) {
+          addMessage("ai", "Fehler bei der Anfrage: Status " + res.status);
+        } else {
+          const data = await res.json();
+          addMessage("ai", data.reply || "(keine Antwort)");
+          loadDashboardData();
+          loadMemoriesTable();
+          loadHistory();
+        }
+      } catch (err) {
+        console.error("Fehler beim Senden:", err);
+        addMessage("ai", "Netzwerkfehler beim Senden der Anfrage.");
+      } finally {
+        chatSendBtn.disabled = false;
+        chatStatusEl.textContent = "Enter = senden • Shift+Enter = Zeilenumbruch";
+        chatInputEl.focus();
+      }
+    }
+
+    chatSendBtn.addEventListener("click", sendMessage);
+    chatInputEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    chatExportBtn.addEventListener("click", () => {
+      const text = chatMessagesEl.innerText || "";
+      if (!text.trim()) {
+        alert("Es gibt noch keine Nachrichten zum Exportieren.");
+        return;
+      }
+      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const dateStr = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+      a.download = `wolf-ki-chat-${dateStr}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    function handleFilesForAnalysis(files) {
+      if (!files || !files.length) return;
+      Array.from(files).forEach((file) => {
+        const isImage = file.type.startsWith("image/");
+        addMessage("user", `[Datei hochgeladen: ${file.name}]`);
+        const formData = new FormData();
+        formData.append("file", file);
+        const endpoint = isImage ? "/analyze-image" : "/analyze-file";
+        addMessage("ai", `Analysiere Datei ${file.name} …`, "Dateianalyse");
+        fetch(API_BASE + endpoint, {
+          method: "POST",
+          body: formData,
+        })
+          .then((res) => {
+            if (!res.ok) throw new Error("Status " + res.status);
+            return res.json();
+          })
+          .then((data) => {
+            const summary = data.summary || JSON.stringify(data, null, 2);
+            addMessage("ai", summary, "Analyse-Ergebnis");
+            loadDashboardData();
+            loadMemoriesTable();
+          })
+          .catch((err) => {
+            console.error("Datei-Analyse Fehler:", err);
+            addMessage("ai", `Fehler bei der Analyse von ${file.name}: ${err.message}`);
+          });
+      });
+    }
+
+    chatFileInput.addEventListener("change", (e) => {
+      handleFilesForAnalysis(e.target.files);
+      chatFileInput.value = "";
+    });
+
+    chatDropzone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      chatDropzone.classList.add("dragover");
+    });
+
+    chatDropzone.addEventListener("dragleave", () => {
+      chatDropzone.classList.remove("dragover");
+    });
+
+    chatDropzone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      chatDropzone.classList.remove("dragover");
+      const files = e.dataTransfer.files;
+      handleFilesForAnalysis(files);
+    });
+
+    function renderSessions() {
+      chatSessionListEl.innerHTML = "";
+      sessions.forEach((s) => {
+        const div = document.createElement("div");
+        div.className =
+          "chat-session-item" + (s.id === currentSessionId ? " active" : "");
+        const titleSpan = document.createElement("span");
+        titleSpan.textContent = s.title || "Chat";
+        const delBtn = document.createElement("button");
+        delBtn.className = "btn-session-delete";
+        delBtn.innerHTML = "×";
+        delBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (!confirm("Diesen Chat aus der Liste entfernen? (Verlauf bleibt in der Datenbank)")) return;
+          sessions = sessions.filter((x) => x.id !== s.id);
+          if (currentSessionId === s.id) {
+            currentSessionId = "default";
+          }
+          renderSessions();
+        });
+        div.addEventListener("click", () => {
+          currentSessionId = s.id;
+          chatMessagesEl.innerHTML = "";
+          renderSessions();
+        });
+        div.appendChild(titleSpan);
+        if (s.id !== "default") div.appendChild(delBtn);
+        chatSessionListEl.appendChild(div);
+      });
+    }
+
+    btnNewChat.addEventListener("click", () => {
+      const title = prompt("Titel für den neuen Chat:", "Neuer Chat");
+      const id = "session-" + Date.now();
+      sessions.push({ id, title: title || "Neuer Chat" });
+      currentSessionId = id;
+      chatMessagesEl.innerHTML = "";
+      renderSessions();
+    });
+
+    async function loadCodeProjects() {
+      if (!currentUser) return;
+      codeProjectsListEl.textContent = "Lade Projekte…";
+      try {
+        const res = await fetch(API_BASE + "/code-projects?user_id=" + encodeURIComponent(currentUser.id) + "&limit=50");
+        if (!res.ok) {
+          codeProjectsListEl.textContent = "Fehler beim Laden der Projekte: " + res.status;
+          return;
+        }
+        const data = await res.json();
+        if (!data || data.length === 0) {
+          codeProjectsListEl.textContent = "Noch keine Projekte vorhanden.";
+          return;
+        }
+        codeProjectsListEl.innerHTML = "";
+        data.forEach((proj) => {
+          const btn = document.createElement("button");
+          btn.className = "btn-small";
+          btn.style.marginRight = "4px";
+          btn.textContent = proj.title || "(Ohne Titel)";
+          btn.addEventListener("click", () => {
+            currentCodeProjectId = proj.id;
+            codeTitleEl.value = proj.title || "";
+            codeLanguageEl.value = proj.language || "";
+            codeContentEl.value = proj.content || "";
+            codeStatusEl.textContent = "Projekt geladen.";
+          });
+          codeProjectsListEl.appendChild(btn);
+        });
+      } catch (err) {
+        console.error("Fehler beim Laden der Code-Projekte:", err);
+        codeProjectsListEl.textContent = "Fehler beim Laden der Projekte.";
+      }
+    }
+
+    async function saveCurrentProject() {
+      if (!currentUser) {
+        codeStatusEl.textContent = "Kein Benutzer angemeldet.";
+        return;
+      }
+      const title = codeTitleEl.value.trim();
+      const content = codeContentEl.value;
+      if (!title || !content) {
+        codeStatusEl.textContent = "Titel und Inhalt dürfen nicht leer sein.";
+        return;
+      }
+      codeStatusEl.textContent = "Speichere Projekt…";
+      try {
+        const res = await fetch(API_BASE + "/code-projects", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: currentCodeProjectId,
+            user_id: currentUser.id,
+            title: title,
+            description: "",
+            language: codeLanguageEl.value.trim(),
+            content: content,
+          }),
+        });
+        if (!res.ok) {
+          codeStatusEl.textContent = "Fehler beim Speichern: " + res.status;
+          return;
+        }
+        const proj = await res.json();
+        currentCodeProjectId = proj.id;
+        codeStatusEl.textContent = "Projekt gespeichert.";
+        loadCodeProjects();
+        loadDashboardData();
+      } catch (err) {
+        console.error("Fehler beim Speichern:", err);
+        codeStatusEl.textContent = "Netzwerkfehler beim Speichern.";
+      }
+    }
+
+    btnCodeNew.addEventListener("click", () => {
+      currentCodeProjectId = null;
+      codeTitleEl.value = "";
+      codeLanguageEl.value = "";
+      codeContentEl.value = "";
+      codeStatusEl.textContent = "Neues Projekt angelegt (noch nicht gespeichert).";
+    });
+
+    btnCodeSave.addEventListener("click", saveCurrentProject);
+
+    async function loadStats() {
+      try {
+        const res = await fetch(API_BASE + "/metrics");
+        if (!res.ok) {
+          statsSummaryEl.textContent = "Fehler beim Laden der Statistiken: " + res.status;
+          return;
+        }
+        const data = await res.json();
+        const totalReq = data.total_requests ?? 0;
+        const todayReq = data.today_requests ?? 0;
+        const totalTokens = data.total_tokens_estimate ?? 0;
+        statsSummaryEl.innerHTML =
+          `Gesamtanfragen: <b>${totalReq}</b><br>` +
+          `Heutige Anfragen: <b>${todayReq}</b><br>` +
+          `Geschätzter Gesamt-Tokenverbrauch: <b>${Math.round(totalTokens / 1000)}k</b><br>`;
+
+        const daily = data.daily_requests || [];
+        statsTableBody.innerHTML = "";
+        if (!daily.length) {
+          const tr = document.createElement("tr");
+          const td = document.createElement("td");
+          td.colSpan = 3;
+          td.textContent = "Noch keine Tagesdaten vorhanden.";
+          tr.appendChild(td);
+          statsTableBody.appendChild(tr);
+          return;
+        }
+        daily.forEach((row) => {
+          const tr = document.createElement("tr");
+          const tdDate = document.createElement("td");
+          tdDate.textContent = row.date || "";
+          const tdCount = document.createElement("td");
+          tdCount.textContent = row.requests ?? 0;
+          const tdTokens = document.createElement("td");
+          tdTokens.textContent = row.tokens ?? 0;
+          tr.appendChild(tdDate);
+          tr.appendChild(tdCount);
+          tr.appendChild(tdTokens);
+          statsTableBody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error("Fehler beim Laden der Statistiken:", err);
+        statsSummaryEl.textContent = "Fehler beim Laden der Statistiken.";
+      }
+    }
+
+    async function loadSystemInfo() {
+      try {
+        const res = await fetch(API_BASE + "/system-info");
+        if (!res.ok) {
+          systemInfoEl.textContent = "Fehler beim Laden der Systeminfos: " + res.status;
+          return;
+        }
+        const data = await res.json();
+        systemInfoEl.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        console.error("Fehler beim Laden der Systeminfos:", err);
+        systemInfoEl.textContent = "Fehler beim Laden der Systeminfos.";
+      }
+    }
+
+    async function logoutUser(auto = false) {
+      try {
+        await supabaseClient.auth.signOut();
+      } catch (err) {
+        console.error("Fehler beim Logout:", err);
+      }
+      currentUser = null;
+      currentProfile = null;
+      appShell.style.display = "none";
+      loginScreen.style.display = "block";
+      if (auto) {
+        loginErrorEl.textContent = "Du wurdest nach Inaktivität automatisch abgemeldet.";
+        loginErrorEl.style.display = "block";
+      }
+    }
+
+    btnLogout.addEventListener("click", () => logoutUser(false));
+
+    loginForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      loginErrorEl.style.display = "none";
+      const email = document.getElementById("login-email").value.trim();
+      const password = document.getElementById("login-password").value;
+      loginSubmitBtn.disabled = true;
+
+      try {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error || !data.user) {
+          loginErrorEl.textContent = "Login fehlgeschlagen. Bitte E-Mail/Passwort prüfen.";
+          loginErrorEl.style.display = "block";
+          return;
+        }
+        await afterLogin(data.user);
+      } catch (err) {
+        console.error("Login-Fehler:", err);
+        loginErrorEl.textContent = "Unerwarteter Fehler beim Login.";
+        loginErrorEl.style.display = "block";
+      } finally {
+        loginSubmitBtn.disabled = false;
+      }
+    });
+
+    async function afterLogin(user) {
+      const { data: profile, error: profileError } = await supabaseClient
+        .from("user_profile")
+        .select("display_name, role")
+        .eq("auth_user_id", user.id)
+        .single();
+
+      if (profileError) {
+        console.error(profileError);
+        loginErrorEl.textContent = "Profil konnte nicht geladen werden. Prüfe Tabelle user_profile.";
+        loginErrorEl.style.display = "block";
+        return;
+      }
+
+      currentUser = user;
+      currentProfile = profile;
+      loginScreen.style.display = "none";
+      appShell.style.display = "flex";
+
+      const name = profile.display_name || user.email || "Benutzer";
+      greetingNameEl.textContent = name;
+      topbarUserEl.textContent = name;
+      topbarRoleEl.textContent = profile.role || "-";
+      topbarRoleEl.className = "badge " + (profile.role === "admin" ? "green" : "blue");
+
+      navAdmin.style.display = profile.role === "admin" ? "block" : "none";
+
+      showView("dashboard");
+      loadDashboardData();
+      loadMemoriesTable();
+      loadHistory();
+      loadCodeProjects();
+      loadStats();
+      loadSystemInfo();
+      renderSessions();
+
+      chatMessagesEl.innerHTML = "";
+      addMessage(
+        "ai",
+        `Hallo ${name} 👋\nDu bist jetzt mit der Wolf-KI Cloud verbunden. Starte einen neuen Chat oder lade Dateien direkt in den Chat, um Analysen zu erhalten.`
+      );
+
+      resetInactivityTimer();
+    }
+
+    async function checkExistingSession() {
+      try {
+        const { data } = await supabaseClient.auth.getUser();
+        if (data && data.user) {
+          await afterLogin(data.user);
+        } else {
+          loginScreen.style.display = "block";
+          appShell.style.display = "none";
+        }
+      } catch (err) {
+        console.error("Fehler bei Session-Check:", err);
+        loginScreen.style.display = "block";
+        appShell.style.display = "none";
+      }
+    }
+
+    checkExistingSession();
+  </script>
+</body>
+</html>
