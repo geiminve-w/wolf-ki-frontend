@@ -1,0 +1,12 @@
+{
+  "name": "Wolf-KI",
+  "short_name": "Wolf-KI",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "icons": [
+    { "src": "favicon-64.png", "sizes": "64x64", "type": "image/png" },
+    { "src": "wolf-avatar-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
